@@ -1,0 +1,76 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: loregraph-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: loregraph
+      POSTGRES_PASSWORD: loregraph
+      POSTGRES_DB: loregraph
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U loregraph -d loregraph"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mongodb:
+    image: mongo:8
+    container_name: loregraph-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:8
+    container_name: loregraph-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  neo4j:
+    image: neo4j:2025.06.2
+    container_name: loregraph-neo4j
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: neo4j/change_me
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:7474 || exit 1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  redis_data:
+  neo4j_data:
+  neo4j_logs:

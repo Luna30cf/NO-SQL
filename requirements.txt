@@ -1,0 +1,13 @@
+fastapi==0.139.0
+uvicorn[standard]>=0.35.0
+pydantic>=2.13.0
+pydantic-settings>=2.14.2
+asyncpg>=0.31.0
+pymongo>=4.15.0
+redis>=6.4.0
+neo4j>=5.28.1
+python-multipart>=0.0.20
+orjson>=3.11.9
+httpx>=0.28.1
+pytest>=8.4.0
+pytest-asyncio>=1.0.0
