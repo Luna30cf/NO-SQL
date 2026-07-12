@@ -1,108 +1,76 @@
 # LoreGraph
 
-LoreGraph est une plateforme collaborative de création d’univers narratifs utilisant PostgreSQL, MongoDB, Redis et Neo4j derrière une API FastAPI.
+LoreGraph est une plateforme collaborative de création d’univers narratifs utilisant une persistance polyglotte.
 
-## Lancement rapide
+## Démarrage
 
-### Prérequis
+Prérequis :
 
-- Docker Desktop doit être installé et lancé.
-- Python 3.14 doit être installé.
+- Docker Desktop lancé ;
+- Python 3.14 installé ;
+- PowerShell.
 
-### Démarrer le projet
-
-Depuis PowerShell, à la racine du projet :
-
-```powershell
-.\start.ps1
-```
-
-Le script effectue automatiquement :
-
-- la création de `.env` depuis `.env.example` ;
-- la création de `.venv` si nécessaire ;
-- l’installation des dépendances Python ;
-- le démarrage des quatre bases Docker ;
-- l’initialisation de Neo4j si la base est vide ;
-- le lancement de FastAPI ;
-- le lancement du frontend ;
-- l’ouverture du navigateur.
-
-La plateforme est disponible sur :
-
-```text
-http://127.0.0.1:5173
-```
-
-Swagger est disponible sur :
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-### Arrêter le projet
+Cloner puis lancer :
 
 ```powershell
-.\stop.ps1
+git clone https://github.com/Luna30cf/NO-SQL.git
+cd NO-SQL
+powershell -ExecutionPolicy Bypass -File .\start.ps1
 ```
 
-## Configuration
+Le script :
 
-Le fichier `.env.example` contient la configuration locale par défaut.
+- crée `.env` depuis `.env.example` ;
+- crée `.venv` si nécessaire ;
+- installe les dépendances ;
+- démarre PostgreSQL, MongoDB, Redis et Neo4j ;
+- attend que les bases soient disponibles ;
+- lance FastAPI ;
+- lance le frontend ;
+- ouvre le navigateur.
 
-Au premier lancement, `start.ps1` crée automatiquement `.env` :
+Accès :
 
-```powershell
-Copy-Item .env.example .env
-```
+- Frontend : `http://127.0.0.1:5173`
+- Swagger : `http://127.0.0.1:8000/docs`
+- Santé : `http://127.0.0.1:8000/api/v1/health`
+- Neo4j Browser : `http://127.0.0.1:7474`
 
-Il n’est donc pas nécessaire de recopier manuellement les variables d’environnement.
+## Initialisation automatique
 
-## Architecture
+Un premier démarrage sur des volumes vierges charge automatiquement :
 
-- PostgreSQL : utilisateurs, projets, chapitres, versions et publications.
-- MongoDB : fiches de personnages riches et flexibles.
-- Redis : brouillons temporaires, TTL, verrous d’édition et cache.
-- Neo4j : relations entre personnages, événements, lieux, objets et factions.
-- FastAPI : API commune.
-- Frontend HTML/CSS/JavaScript : interface utilisateur.
+- `init.sql` puis `seed.sql` dans PostgreSQL ;
+- `mongo/init.js` dans MongoDB ;
+- `redis/seed.sh` dans Redis ;
+- `neo4j/schema.cypher`, `neo4j/seed.cypher` et `neo4j/relations.cypher` dans Neo4j.
 
-## Réinitialisation complète
+Les mêmes identifiants sont partagés entre les bases :
 
-Pour supprimer les données persistées et repartir de zéro :
+- `project_001`
+- `chapter_001`, `chapter_002`
+- `character_001` à `character_006`
+- `user_001` à `user_003`
+
+## Vérification de reproductibilité
 
 ```powershell
 docker compose down -v
-.\start.ps1
-```
-
-Neo4j sera automatiquement réinitialisé au prochain lancement.
-
-## Dépannage
-
-### PowerShell bloque l’exécution du script
-
-Exécuter une seule fois dans le terminal courant :
-
-```powershell
-Set-ExecutionPolicy -Scope Process Bypass
+powershell -ExecutionPolicy Bypass -File .\start.ps1
 ```
 
 Puis :
 
 ```powershell
-.\start.ps1
-```
-
-### Une base ne démarre pas
-
-```powershell
-docker compose ps
-docker compose logs --tail=100
-```
-
-### Vérifier l’état général
-
-```powershell
 curl.exe http://127.0.0.1:8000/api/v1/health
+docker exec loregraph-postgres psql -U loregraph -d loregraph -c "SELECT COUNT(*) FROM projects;"
+docker exec loregraph-mongodb mongosh --quiet --eval "db.getSiblingDB('loregraph').characters.countDocuments()"
+docker exec loregraph-redis redis-cli DBSIZE
+docker exec loregraph-neo4j cypher-shell -u neo4j -p change_me "MATCH (n) RETURN count(n);"
+```
+
+## Arrêt
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\stop.ps1
 ```
