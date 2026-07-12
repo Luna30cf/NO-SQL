@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LoreGraph</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">LG</div>
+      <div>
+        <h1>LoreGraph</h1>
+        <p>Studio narratif polyglotte</p>
+      </div>
+    </div>
+
+    <nav id="main-nav">
+      <button class="nav-item active" data-page="dashboard">Tableau de bord</button>
+      <button class="nav-item" data-page="projects">Projets</button>
+      <button class="nav-item" data-page="chapters">Chapitres</button>
+      <button class="nav-item" data-page="characters">Personnages</button>
+      <button class="nav-item" data-page="drafts">Éditeur</button>
+      <button class="nav-item" data-page="graph">Graphe</button>
+      <button class="nav-item" data-page="settings">Configuration</button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <span id="global-status-dot" class="status-dot"></span>
+      <span id="global-status-label">Connexion...</span>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <h2 id="page-title">Tableau de bord</h2>
+        <p id="page-subtitle">Vue d’ensemble de la plateforme</p>
+      </div>
+      <div class="topbar-actions">
+        <button class="secondary" id="refresh-page-btn">Actualiser</button>
+      </div>
+    </header>
+
+    <div id="notification-zone"></div>
+
+    <section id="page-dashboard" class="page active">
+      <div id="service-cards" class="grid four"></div>
+
+      <div class="grid two">
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Résumé du contenu</h3>
+              <p>État courant des principales entités</p>
+            </div>
+          </div>
+          <div id="content-stats" class="stats-grid"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Accès rapides</h3>
+              <p>Créer ou explorer du contenu</p>
+            </div>
+          </div>
+          <div class="quick-actions">
+            <button class="primary" data-go="projects">Nouveau projet</button>
+            <button class="primary" data-go="chapters">Nouveau chapitre</button>
+            <button class="primary" data-go="characters">Nouveau personnage</button>
+            <button class="secondary" data-go="drafts">Ouvrir l’éditeur</button>
+          </div>
+        </article>
+      </div>
+
+      <article class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Timeline du projet actif</h3>
+            <p>Événements issus de Neo4j</p>
+          </div>
+          <button class="secondary" id="dashboard-timeline-btn">Charger</button>
+        </div>
+        <div id="dashboard-timeline" class="timeline"></div>
+      </article>
+    </section>
+
+    <section id="page-projects" class="page">
+      <div class="split-layout">
+        <article class="panel sticky-panel">
+          <div class="panel-header">
+            <div>
+              <h3>Créer un projet</h3>
+              <p>Stocké dans PostgreSQL</p>
+            </div>
+          </div>
+          <form id="project-form" class="form">
+            <label>Identifiant
+              <input id="project-id" required value="project_002" pattern="project_[A-Za-z0-9_-]+">
+            </label>
+            <label>Titre
+              <input id="project-title" required minlength="2" maxlength="150" placeholder="Chroniques d’Onyx">
+            </label>
+            <label>Propriétaire
+              <input id="project-owner" required value="user_001">
+            </label>
+            <label>Description
+              <textarea id="project-description" maxlength="2000" placeholder="Résumé de l’univers..."></textarea>
+            </label>
+            <button class="primary" type="submit">Créer le projet</button>
+          </form>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Projets existants</h3>
+              <p>Sélectionner un projet le rend actif dans toute l’application</p>
+            </div>
+            <button class="secondary" id="projects-refresh-btn">Actualiser</button>
+          </div>
+          <div id="projects-list" class="card-list"></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="page-chapters" class="page">
+      <div class="split-layout">
+        <article class="panel sticky-panel">
+          <div class="panel-header">
+            <div>
+              <h3>Créer un chapitre</h3>
+              <p>Projet actif : <strong id="chapter-active-project">—</strong></p>
+            </div>
+          </div>
+          <form id="chapter-form" class="form">
+            <label>Identifiant
+              <input id="chapter-id" required value="chapter_003" pattern="chapter_[A-Za-z0-9_-]+">
+            </label>
+            <label>Projet
+              <input id="chapter-project-id" required value="project_001">
+            </label>
+            <label>Auteur
+              <input id="chapter-author-id" required value="user_001">
+            </label>
+            <label>Titre
+              <input id="chapter-title" required maxlength="200" placeholder="Le réveil des ombres">
+            </label>
+            <label>Numéro
+              <input id="chapter-number" required type="number" min="1" value="2">
+            </label>
+            <label>Statut
+              <select id="chapter-status">
+                <option value="draft">Brouillon</option>
+                <option value="review">En relecture</option>
+                <option value="published">Publié</option>
+              </select>
+            </label>
+            <button class="primary" type="submit">Créer le chapitre</button>
+          </form>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Chapitres</h3>
+              <p>Création, consultation, publication et ouverture dans l’éditeur</p>
+            </div>
+            <button class="secondary" id="chapters-refresh-btn">Actualiser</button>
+          </div>
+          <div id="chapters-list" class="card-list"></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="page-characters" class="page">
+      <div class="split-layout">
+        <article class="panel sticky-panel">
+          <div class="panel-header">
+            <div>
+              <h3 id="character-form-title">Créer un personnage</h3>
+              <p>Fiche riche MongoDB, synchronisée avec Neo4j</p>
+            </div>
+          </div>
+
+          <form id="character-form" class="form">
+            <input id="character-editing-id" type="hidden">
+            <label>Identifiant
+              <input id="character-id" required value="character_008" pattern="character_[A-Za-z0-9_-]+">
+            </label>
+            <label>Projet
+              <input id="character-project-id" required value="project_001">
+            </label>
+            <label>Nom
+              <input id="character-name" required maxlength="150">
+            </label>
+            <label>Alias
+              <input id="character-aliases" placeholder="Alias 1, Alias 2">
+            </label>
+            <label>Description
+              <textarea id="character-description"></textarea>
+            </label>
+
+            <div class="form-grid two">
+              <label>Âge
+                <input id="character-age" type="number" min="0">
+              </label>
+              <label>Espèce
+                <input id="character-species" placeholder="Humain, elfe...">
+              </label>
+              <label>Rôle
+                <input id="character-role" placeholder="Protagoniste">
+              </label>
+              <label>Alignement
+                <input id="character-alignment" placeholder="Neutre">
+              </label>
+            </div>
+
+            <label>Capacités
+              <textarea id="character-abilities" placeholder="Une capacité par ligne"></textarea>
+            </label>
+            <label>Champs personnalisés
+              <textarea id="character-custom-fields" placeholder='JSON, ex. {"origine":"Valcor"}'></textarea>
+            </label>
+
+            <div class="button-row">
+              <button class="primary" type="submit" id="character-submit-btn">Créer</button>
+              <button class="secondary hidden" type="button" id="character-cancel-edit-btn">Annuler</button>
+            </div>
+          </form>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Personnages</h3>
+              <p>Recherche, édition, suppression et exploration du réseau</p>
+            </div>
+            <button class="secondary" id="characters-refresh-btn">Actualiser</button>
+          </div>
+          <div class="toolbar">
+            <input id="character-search" placeholder="Rechercher par nom, alias ou description">
+          </div>
+          <div id="characters-list" class="card-list"></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="page-drafts" class="page">
+      <div class="editor-layout">
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Contexte d’édition</h3>
+              <p>Redis gère le brouillon et le verrou collaboratif</p>
+            </div>
+          </div>
+
+          <div class="form-grid two">
+            <label>Chapitre
+              <input id="draft-chapter-id" value="chapter_001">
+            </label>
+            <label>Utilisateur
+              <input id="draft-user-id" value="user_001">
+            </label>
+          </div>
+
+          <div class="button-row">
+            <button class="secondary" id="draft-load-btn">Charger</button>
+            <button class="secondary" id="draft-lock-btn">Acquérir le verrou</button>
+            <button class="primary" id="draft-save-btn">Enregistrer</button>
+            <button class="danger" id="draft-publish-btn">Publier le chapitre</button>
+          </div>
+
+          <div id="draft-state" class="inline-status"></div>
+        </article>
+
+        <article class="panel editor-panel">
+          <div class="editor-header">
+            <input id="draft-title-display" value="Éditeur de chapitre" readonly>
+            <span id="draft-save-indicator">Non enregistré</span>
+          </div>
+          <textarea id="draft-content" class="editor" placeholder="Écrivez ici le contenu du chapitre..."></textarea>
+          <div class="editor-footer">
+            <span id="draft-word-count">0 mot</span>
+            <span>Expiration Redis : 24 h</span>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="page-graph" class="page">
+      <div class="grid two">
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Créer une relation</h3>
+              <p>Ajoute une arête dans Neo4j</p>
+            </div>
+          </div>
+          <form id="relationship-form" class="form">
+            <label>Source
+              <input id="relation-source" required value="character_001">
+            </label>
+            <label>Cible
+              <input id="relation-target" required value="character_002">
+            </label>
+            <label>Type de relation
+              <select id="relation-type">
+                <option>ALLY_OF</option>
+                <option>ENEMY_OF</option>
+                <option>SIBLING_OF</option>
+                <option>PARENT_OF</option>
+                <option>MEMBER_OF</option>
+                <option>PARTICIPATED_IN</option>
+                <option>OWNS</option>
+                <option>MENTIONS</option>
+              </select>
+            </label>
+            <label>Propriétés
+              <textarea id="relation-properties" placeholder='JSON, ex. {"since":"1030","trustLevel":8}'></textarea>
+            </label>
+            <button class="primary" type="submit">Créer la relation</button>
+          </form>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Plus court chemin</h3>
+              <p>Recherche de parcours entre deux nœuds</p>
+            </div>
+          </div>
+          <div class="form">
+            <label>Source
+              <input id="path-source" value="character_001">
+            </label>
+            <label>Cible
+              <input id="path-target" value="character_002">
+            </label>
+            <button class="primary" id="path-load-btn">Calculer</button>
+          </div>
+          <div id="path-result"></div>
+        </article>
+      </div>
+
+      <div class="grid two">
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Réseau d’un personnage</h3>
+              <p>Relations directes et indirectes</p>
+            </div>
+          </div>
+          <div class="toolbar">
+            <input id="network-character-id" value="character_001">
+            <button class="primary" id="network-load-btn">Explorer</button>
+          </div>
+          <div id="network-result" class="card-list compact"></div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Timeline</h3>
+              <p>Ordre narratif des événements</p>
+            </div>
+          </div>
+          <div class="toolbar">
+            <input id="timeline-project-id" value="project_001">
+            <button class="primary" id="timeline-load-btn">Charger</button>
+          </div>
+          <div id="timeline-result" class="timeline"></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="page-settings" class="page">
+      <article class="panel narrow">
+        <div class="panel-header">
+          <div>
+            <h3>Configuration de l’API</h3>
+            <p>Adresse utilisée par le frontend</p>
+          </div>
+        </div>
+        <form id="settings-form" class="form">
+          <label>URL de l’API
+            <input id="api-base-url" value="http://127.0.0.1:8000/api/v1">
+          </label>
+          <button class="primary" type="submit">Enregistrer</button>
+        </form>
+      </article>
+    </section>
+  </main>
+
+  <template id="empty-template">
+    <div class="empty-state">
+      <h4>Aucune donnée</h4>
+      <p>Créez un premier élément pour commencer.</p>
+    </div>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,144 +1,108 @@
-# LoreGraph — Application API
+# LoreGraph
 
-Application support du projet de persistance polyglotte.
+LoreGraph est une plateforme collaborative de création d’univers narratifs utilisant PostgreSQL, MongoDB, Redis et Neo4j derrière une API FastAPI.
 
-Cette partie contient uniquement l'application :
-- API FastAPI ;
-- configuration ;
-- validation des données ;
-- routes métier ;
-- connexion aux quatre moteurs ;
-- couche de services et repositories ;
-- gestion des erreurs ;
-- tests unitaires de base ;
-- Dockerfile de l'API.
+## Lancement rapide
 
-Elle ne contient pas :
-- le `docker-compose.yml` des quatre bases ;
-- les schémas SQL ;
-- les scripts MongoDB ;
-- les seeds Redis ;
-- les contraintes et seeds Neo4j ;
-- le dossier de conception.
+### Prérequis
 
-## Prérequis
+- Docker Desktop doit être installé et lancé.
+- Python 3.14 doit être installé.
 
-- Python 3.14
-- PostgreSQL
-- MongoDB
-- Redis
-- Neo4j
+### Démarrer le projet
 
-## Installation locale
-
-```bash
-py -3.14 -m venv .venv
-```
-
-Sous Windows :
+Depuis PowerShell, à la racine du projet :
 
 ```powershell
-.venv\Scripts\activate
+.\start.ps1
 ```
 
-Sous Linux/macOS :
+Le script effectue automatiquement :
 
-```bash
-source .venv/bin/activate
+- la création de `.env` depuis `.env.example` ;
+- la création de `.venv` si nécessaire ;
+- l’installation des dépendances Python ;
+- le démarrage des quatre bases Docker ;
+- l’initialisation de Neo4j si la base est vide ;
+- le lancement de FastAPI ;
+- le lancement du frontend ;
+- l’ouverture du navigateur.
+
+La plateforme est disponible sur :
+
+```text
+http://127.0.0.1:5173
+```
+
+Swagger est disponible sur :
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+### Arrêter le projet
+
+```powershell
+.\stop.ps1
+```
+
+## Configuration
+
+Le fichier `.env.example` contient la configuration locale par défaut.
+
+Au premier lancement, `start.ps1` crée automatiquement `.env` :
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Il n’est donc pas nécessaire de recopier manuellement les variables d’environnement.
+
+## Architecture
+
+- PostgreSQL : utilisateurs, projets, chapitres, versions et publications.
+- MongoDB : fiches de personnages riches et flexibles.
+- Redis : brouillons temporaires, TTL, verrous d’édition et cache.
+- Neo4j : relations entre personnages, événements, lieux, objets et factions.
+- FastAPI : API commune.
+- Frontend HTML/CSS/JavaScript : interface utilisateur.
+
+## Réinitialisation complète
+
+Pour supprimer les données persistées et repartir de zéro :
+
+```powershell
+docker compose down -v
+.\start.ps1
+```
+
+Neo4j sera automatiquement réinitialisé au prochain lancement.
+
+## Dépannage
+
+### PowerShell bloque l’exécution du script
+
+Exécuter une seule fois dans le terminal courant :
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
 ```
 
 Puis :
 
-```bash
-pip install -r requirements.txt
-copy .env.example .env
-uvicorn app.main:app --reload
+```powershell
+.\start.ps1
 ```
 
-Documentation interactive :
-
-- Swagger : `http://localhost:8000/docs`
-- ReDoc : `http://localhost:8000/redoc`
-- Santé : `http://localhost:8000/api/v1/health`
-
-## Hypothèses de modèle
-
-L'application attend les éléments suivants.
-
-### PostgreSQL
-
-Tables utilisées :
-- `users`
-- `projects`
-- `project_members`
-- `chapters`
-- `chapter_versions`
-- `publications`
-
-### MongoDB
-
-Collections utilisées :
-- `characters`
-- `locations`
-- `items`
-- `events`
-- `notes`
-
-### Redis
-
-Clés principales :
-- `cache:character:{character_id}`
-- `draft:chapter:{chapter_id}:user:{user_id}`
-- `lock:chapter:{chapter_id}`
-- `popular:characters`
-- `session:{session_id}`
-
-### Neo4j
-
-Labels principaux :
-- `Character`
-- `Faction`
-- `Location`
-- `Event`
-- `Item`
-- `Chapter`
-
-Relations principales :
-- `ALLY_OF`
-- `ENEMY_OF`
-- `PARENT_OF`
-- `SIBLING_OF`
-- `MEMBER_OF`
-- `PARTICIPATED_IN`
-- `PRECEDES`
-- `MENTIONS`
-
-## Lancer les tests
-
-```bash
-pytest
-```
-
-## Vérification syntaxique
-
-```bash
-python -m compileall app
-```
-
-## Compatibilité Python 3.14
-
-Cette version utilise exclusivement des dépendances compatibles Python 3.14 :
-
-- `asyncpg >= 0.31.0`
-- `pydantic >= 2.13.0`
-- `pydantic-settings >= 2.14.2`
-- `orjson >= 3.11.9`
-- API asynchrone native de PyMongo via `AsyncMongoClient`
-
-Avant l'installation, vérifiez :
+### Une base ne démarre pas
 
 ```powershell
-python --version
+docker compose ps
+docker compose logs --tail=100
 ```
 
-Le résultat doit commencer par `Python 3.14`.
+### Vérifier l’état général
+
+```powershell
+curl.exe http://127.0.0.1:8000/api/v1/health
+```
